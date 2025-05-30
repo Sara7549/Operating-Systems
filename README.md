@@ -1,239 +1,141 @@
-Operating Systems – Milestone Overview
-In this milestone, you are asked to create your own scheduler and manage the usage of the resources between different processes. You are provided with three program files, each representing a separate program.
-Your tasks include:
+# Operating-Systems
 
-Creating an interpreter to read and execute the .txt files.
+## Milestone Overview
 
-Implementing memory management to store processes.
+In this milestone, you are asked to create your own scheduler and manage the usage of resources between different processes. You are provided with **three program files**, each representing a program. You are asked to create an interpreter that reads the `.txt` files and executes their code. You will also implement memory management to store the processes, and mutexes to ensure mutual exclusion over critical resources. Finally, you must implement a scheduler to manage process execution.
 
-Implementing mutexes to ensure mutual exclusion over critical resources.
+---
 
-Implementing a scheduler to manage process execution.
+## Detailed Description
 
-Detailed Description
-Programs
-There are 3 main programs:
+### Programs
 
-Program 1: Given two numbers, prints the numbers between them (inclusive).
+We have **3 main programs**:
 
-Program 2: Given a filename and data, writes the data to the file. The file is always newly created.
+- **Program 1:** Given two numbers, prints the numbers between the two (inclusive).
+- **Program 2:** Given a filename and data, writes the data to the file. Assume the file doesn't exist and should always be created.
+- **Program 3:** Given a filename, prints the contents of the file on the screen.
 
-Program 3: Given a filename, prints the contents of the file on the screen.
+---
 
-Process Control Block (PCB)
-A PCB is a data structure used by operating systems to store information about a process. Each process should have a PCB containing:
+### Process Control Block (PCB)
 
-Process ID (assigned upon creation)
+A PCB is a data structure used by operating systems to store all information about a process. You must keep a PCB for every process, with the following information:
 
-Process State
+- **Process ID:** Assigned upon creation.
+- **Process State**
+- **Current Priority**
+- **Program Counter**
+- **Memory Boundaries:** Lower and upper bounds of the process’ space in memory.
 
-Current Priority
+---
 
-Program Counter
+### Program Syntax
 
-Memory Boundaries (lower and upper bounds of the process’s memory space)
+For the programs, use the following instructions:
 
-Program Syntax
-Each instruction takes one clock cycle to execute. Syntax is as follows:
+- `print x` - Print the value of `x`.
+- `assign x y` - Assign value `y` to variable `x`. `y` can be an integer, string, or `input`. If `y` is `input`, print "Please enter a value" and accept user input.
+- `writeFile x y` - Write data `y` to file `x`.
+- `readFile x` - Read and print contents of file `x`.
+- `printFromTo x y` - Print all numbers between `x` and `y` (inclusive).
+- `semWait x` - Acquire resource `x` (see Mutual Exclusion).
+- `semSignal x` - Release resource `x` (see Mutual Exclusion).
 
-print x — Prints variable x to the screen.
+**Note:**  
+- Every line of instruction is executed in 1 clock cycle.
 
-assign x y — Assigns value y to variable x. y may be:
+---
 
-A literal (e.g., number, string), or
+### Memory
 
-The keyword input which prompts: “Please enter a value” and waits for user input.
+- The memory is of fixed size: **60 words**.
+- It stores unparsed code lines, variables, and PCB for any process.
+- Each word can store a name and its corresponding data (e.g., `State: "Ready"`).
+- Each process, upon creation (arrival time), is allocated space for instructions, variables (enough for 3 variables), and PCB.
+- You can separate code, variables, and PCB within the same memory structure as long as they remain contiguous per process.
 
-writeFile x y — Writes value y to file x.
+---
 
-readFile x — Reads contents of file x.
+### Scheduler
 
-printFromTo x y — Prints all numbers between x and y (inclusive).
+The scheduler manages processes in the Ready Queue, ensuring all get a chance to execute. You need to implement:
 
-semWait x — Acquires the mutex for resource x.
+1. **First Come First Serve (FCFS)**
+2. **Round Robin (RR):** User can set the quantum.
+3. **Multilevel Feedback Queue (MLFQ):**
+    - Four priority levels (1 = highest, 4 = lowest).
+    - Quantum doubles as you move to lower levels.
+    - Last level uses Round Robin policy.
 
-semSignal x — Releases the mutex for resource x.
+Your task: **Implement all three algorithms from scratch and use them to schedule processes.**
 
-Memory
-The memory consists of 60 words, enough to store:
+---
 
-Unparsed lines of code
+### Mutual Exclusion
 
-Variables
+A mutex is used to control access to shared resources with two atomic operations: `semWait` and `semSignal`. You must implement three mutexes, one for each resource:
 
-PCB information
+- **File access** (read/write)
+- **User input**
+- **Screen output**
 
-Each memory word holds a name and its corresponding value (e.g., State: "Ready").
-Memory allocation occurs at process arrival time, and each process requires space for:
+When using a mutex, pass the resource name:
+- `userInput` (for user input)
+- `userOutput` (for screen output)
+- `file` (for file access)
 
-Its program instructions
+**Example:**
+- `semWait userOutput` - Acquire screen output resource.
+- `semSignal userOutput` - Release screen output resource.
 
-3 variables
+**Rules:**
+- Only one process can use a resource at a time.
+- If a resource is busy, requesting processes are blocked and added to the respective blocked queues.
+- Unblocking is based on priority: highest priority process waiting for a resource is unblocked first.
+- Unblocked processes return to the ready queue at their priority level.
 
-Its PCB
+---
 
-Memory segments can be separated as needed, as long as they reside within the same memory structure.
+## GUI Requirements for the Scheduler Simulation
 
-Scheduler
-A scheduler handles the execution order of processes in the Ready Queue. You are required to implement the following algorithms:
+The GUI must display real-time information on processes, memory, and resources.
 
-First Come First Serve (FCFS)
+### Main Features
 
-Round Robin with configurable quantum (input from user)
+1. **Main Dashboard**
+   - **Overview:** Total processes, current clock cycle, active scheduling algorithm.
+   - **Process List:** Shows all processes with ID, state (Ready/Running/Blocked), priority, memory boundaries, program counter.
+   - **Queue Section:** Ready queue, blocking queue, running process details (including current instruction and time in queue).
 
-Multilevel Feedback Queue (MLFQ):
+2. **Scheduler Control Panel**
+   - **Algorithm Selection:** Dropdown for FCFS, RR (with adjustable quantum), and MLFQ.
+   - **Controls:** Start, Stop, Reset simulation.
+   - **Quantum Adjustment:** Input for setting RR quantum.
 
-4 priority levels (1 is highest, 4 is lowest)
+3. **Resource Management Panel**
+   - **Mutex Status:** Shows which process is holding or waiting for userInput, userOutput, or file resources.
+   - **Blocked Queue:** Lists processes waiting for resources and their priorities.
 
-Quantum starts at 1 and doubles for each level
+4. **Memory Viewer**
+   - Visualizes allocation of all 60 memory words.
 
-Level 4 uses Round Robin
+5. **Log & Console Panel**
+   - **Execution Log:** Real-time log of executed instructions (shows current instruction, process ID, system reaction).
+   - **Event Messages:** Real-time system status (e.g., when processes are blocked/unblocked).
 
-You must schedule processes using these custom implementations.
+6. **Process Creation and Configuration**
+   - **Add Process:** Load a new process file via file prompt.
+   - **Process Configuration:** Set arrival time for each process before starting simulation.
 
-Mutual Exclusion
-You are required to implement mutexes for:
+7. **Visualized Execution**
+   - **Step-by-Step Execution:** Advance simulation one clock cycle at a time.
+   - **Auto Execution:** Run continuously until completion or stopped.
 
-File access (read/write)
+---
 
-User input
+### Additional Notes
 
-User output
-
-Mutexes use:
-
-semWait <resource> to request access
-
-semSignal <resource> to release access
-
-For example:
-
-plaintext
-Copy
-Edit
-semWait userOutput
-print x
-semSignal userOutput
-Rules:
-Only one process may access a resource at a time.
-
-If the resource is in use, the requesting process is:
-
-Blocked, and
-
-Added to both the resource’s blocked queue and the general blocked queue.
-
-Unblocking is based on priority: the highest-priority blocked process gets unblocked first.
-
-Once unblocked, a process goes to the appropriate ready queue based on its priority.
-
-GUI Requirements for the Scheduler Simulation
-The GUI must allow users to interact with the OS simulation by viewing and controlling processes, memory, and resources.
-
-1. Main Dashboard
-Overview Section:
-
-Total number of processes
-
-Current clock cycle
-
-Active scheduling algorithm
-
-Process List:
-
-Process ID
-
-State (Ready, Running, Blocked)
-
-Current Priority
-
-Memory Boundaries
-
-Program Counter
-
-Queue Section:
-
-Ready Queue
-
-Blocked Queue
-
-Running Process
-
-Current instruction
-
-Time in queue
-
-2. Scheduler Control Panel
-Scheduling Algorithm Selector (dropdown):
-
-FCFS
-
-Round Robin (user-defined quantum)
-
-Multilevel Feedback Queue
-
-Buttons:
-
-Start: Begins the simulation
-
-Stop: Pauses the simulation
-
-Reset: Clears all memory and processes
-
-Quantum Input: User can set Round Robin quantum
-
-3. Resource Management Panel
-Mutex Status:
-
-Displays which process holds or is waiting for:
-
-userInput
-
-userOutput
-
-file
-
-Blocked Queue Viewer:
-
-Lists all waiting processes and their priorities
-
-4. Memory Viewer
-Displays allocation of the 60 memory words as a grid or list
-
-5. Log & Console Panel
-Execution Log:
-
-Real-time log of instructions
-
-Shows process ID and system response
-
-Event Messages:
-
-Messages like process blocking, unblocking, etc.
-
-6. Process Creation and Configuration
-Add Process:
-
-Button to upload a .txt program file
-
-Set Arrival Time:
-
-Users define when each process arrives (before simulation starts)
-
-7. Visualized Execution
-Step-by-Step Execution: Advances simulation by one clock cycle
-
-Auto Execution: Runs simulation continuously until completion or manual stop
-
-Additional Notes
-Process scheduling order is user-configurable
-
-Memory should be shown clearly each clock cycle
-
-Real-time updates are required to:
-
-Track currently executing process
-
-Show resource statuses
-
-Reflect memory allocation changes
+- The process scheduling order can be changed by the user.
+- Memory must be displayed in a human-readable format every clock cycle.
+- GUI updates after each clock cycle to reflect the latest data (current process, resource usage, memory allocation).
